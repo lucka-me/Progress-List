@@ -1,2 +1,3 @@
-# Progress-List
-A list of progress bar.
+# Goal
+Something like [this](https://twitter.com/ProgressBar2017 "Twitter@ProgressBar2017") (maybe...  
+Made with C++ and linked list?
