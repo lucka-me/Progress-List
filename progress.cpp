@@ -31,7 +31,7 @@ public:
         int init_num = 0,
         int Length = 0,
         double init_progress = 0.0
-        );
+    );
     ~Event(void) {};
     void edit(int cmd, Event &target, string str);
     void edit(int cmd, Event &target, Date d);
