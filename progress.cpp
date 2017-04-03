@@ -1,5 +1,6 @@
 #include <iostream>
 #include <iomanip>
+#include <fstream>
 #include <string>
 #include <sstream>
 #include <time.h>
@@ -39,9 +40,9 @@ private:
     double progress;
 public:
     Event(
-        string  init_name,
-        Date    init_startDate,
-        Date    init_endDate,
+        string  init_name           = "",
+        Date    init_startDate      = Date(),
+        Date    init_endDate        = Date(),
         string  init_description    = "",
         int     init_length         = 0,
         int     init_past         = 0,
@@ -57,10 +58,21 @@ public:
 };
 
 typedef struct node {
-    Event date;
-    node *next;
-    node *previous;
-} NewNode;
+    Event data;
+    struct node *next;
+} EventNode;
+
+class consoleClass {
+private:
+    string filename;
+public:
+    consoleClass(void);
+    ~consoleClass(void){};
+    string getFilenName(void);
+    EventNode *getList(void);
+    int displayAllEvet(EventNode *EventList);
+    int save(void);
+};
 
 bool isLeap(int year);
 Date getToday(void);
@@ -72,14 +84,10 @@ string to_string(double number, int precision);
 /************************************************/
 
 int main(int argc, char const *argv[]) {
-    Event test(
-        "Term",
-        Date(2017, 2, 27),
-        Date(2017, 7, 7),
-        "A test event, this term.",
-        1
-    );
-    cout << test.getDisplayString() << endl;
+    consoleClass console;
+    string filename = console.getFilenName();
+    EventNode *EventList = console.getList();
+    console.displayAllEvet(EventList);
     return 0;
 }
 
@@ -231,6 +239,92 @@ string Event::getDisplayString(void) {
 }
 
 /************************************************/
+/*                 consoleClass                 */
+/************************************************/
+consoleClass::consoleClass(void) {
+    filename = "";
+}
+
+string consoleClass::getFilenName(void) {
+	fstream detectFile;
+	char errCmd;
+	do {
+		cout << "Enter the Database filename\n(\"data\" for default): ";
+		getline(cin, filename);
+		filename = (filename == "") ? "data" : filename;
+		detectFile.open(filename, ios::in | ios::out);
+		if (!detectFile) {
+			cerr << "Could NOT open the file!" << endl;
+			do {
+				cout << "Enter again?(Y/N)";
+				errCmd = cin.get();
+				while (cin.get() != '\n');
+				if (errCmd == 'N' || errCmd == 'n') {
+					exit(1);
+				}
+			} while(errCmd != 'Y' && errCmd != 'y');
+		}
+	} while(!detectFile);
+	cout << "Open file successfully!" << endl;
+	return filename;
+}
+
+EventNode *consoleClass::getList(void) {
+    EventNode *EventListHead = new EventNode;
+    EventNode *lastNode, *newNode;
+    EventListHead->next = NULL;
+    lastNode = EventListHead;
+
+    // One line is like:
+    // #[Term][This term][2017 2 27][2017 7 7]
+    string  name, description, temp;
+    int     startDateYear, startDateMonth, startDateDay;
+    int     endDateYear, endDateMonth, endDateDay;
+    ifstream file;
+    file.open(filename, ios::in);
+    while (!file.eof()) {
+        file.ignore(2, '[');
+        getline(file, name, ']');
+        file.ignore(1, '[');
+        getline(file, description, ']');
+        file.ignore(1, '[');
+        file >> startDateYear >> startDateMonth >> startDateDay;
+        file.ignore(2, '[');
+        file >> endDateYear >> endDateMonth >> endDateDay;
+        file.ignore(2, '\n');
+        if(file.eof()) break;
+        newNode = new EventNode;
+        lastNode->next = newNode;
+        newNode->data = Event(
+            name,
+            Date(startDateYear, startDateMonth, startDateDay),
+            Date(endDateYear, endDateMonth, endDateDay),
+            description
+        );
+        newNode->next = NULL;
+        lastNode = newNode;
+    }
+
+    return EventListHead;
+}
+
+int consoleClass::displayAllEvet(EventNode *EventList) {
+    int flag = 0;
+    int counter = 0;
+    EventNode *scanner = EventList;
+    while (scanner->next != NULL) {
+        scanner = scanner->next;
+        counter++;
+        cout << setfill('0') << setw(2) << counter << ". " << scanner->data.getDisplayString() << endl;
+	}
+    return flag;
+}
+
+int consoleClass::save(void) {
+    int flag = 0;
+    return flag;
+}
+/************************************************/
 /*                   Operator                   */
 /************************************************/
 int operator - (Date &endDate, Date &startDate) {
@@ -337,7 +431,10 @@ string to_string(int number, int width) {
 string to_string(double number, int precision) {
     stringstream tempStringStream;
     string result;
-    // The "fixed" convert the float point number to fixed point number
+    // The "fixed" converts the float point number to fixed point number
+    // setprecision() sets the precision of:
+    // fixed and scientific -> after decimal point
+    // other -> the whole number
     tempStringStream << fixed << setprecision(precision) << number;
     tempStringStream >> result;
     return result;
