@@ -2,6 +2,10 @@
 #include <iostream>
 using namespace std;
 
+/************************************************/
+/*                     Head                     */
+/************************************************/
+
 class Date {
 private:
     int year;
@@ -13,6 +17,7 @@ public:
         int init_month = 1,
         int init_day = 1);
     ~Date(void) {};
+    bool isLeap(void);
     friend int operator - (Date &endDate, Date &startDate);
 };
 
@@ -49,8 +54,25 @@ typedef struct node {
     node *previous;
 } NewNode;
 
-int main(int argc, char const *argv[]) {
+bool isLeap(int year);
 
+
+/************************************************/
+/*                     main                     */
+/************************************************/
+
+int main(int argc, char const *argv[]) {
+    Date start;
+    Date end;
+    int tempYear, tempMonth, tempDay;
+    cout << "Enter the began: ";
+    cin >> tempYear >> tempMonth >> tempDay;
+    start = Date(tempYear, tempMonth, tempDay);
+    cout << "isLeap:" << start.isLeap() << endl;
+    cout << "Enter the end: ";
+    cin >> tempYear >> tempMonth >> tempDay;
+    end = Date(tempYear, tempMonth, tempDay);
+    cout << end - start << "days" << endl;
     return 0;
 }
 
@@ -63,6 +85,9 @@ Date::Date(int init_year, int init_month, int init_day) {
     day = init_day;
 }
 
+bool Date::isLeap(void) {
+    return year % 400 == 0 || (year % 4 == 0 && year % 100 != 0);
+}
 /************************************************/
 /*                     Event                    */
 /************************************************/
@@ -87,8 +112,8 @@ Event::Event(
 // flags:
 // 0    Normal
 // 1    Invalid command, not 1, 2, 3 or 4 either.
-// 11   entered a string but command 3 or 4.
-// 21   entered a Date but command 1 or 2.
+// 11   Entered a string but command 3 or 4.
+// 21   Entered a Date but command 1 or 2.
 int Event::edit(int cmd, Event &target, string str) {
     int flag = 0;
     switch (cmd) {
@@ -131,4 +156,89 @@ int Event::edit(int cmd, Event &target, Date d) {
             break;
     }
     return flag;
+}
+
+/************************************************/
+/*                   Operator                   */
+/************************************************/
+int operator - (Date &endDate, Date &startDate) {
+    // Invalid operate
+    if (
+        (endDate.year < startDate.year
+        ) || (
+            (endDate.year == startDate.year) &&
+            (endDate.month < startDate.month)
+        ) || (
+            (endDate.year == startDate.year) &&
+            (endDate.month == startDate.month) &&
+            (endDate.day < startDate.day)
+        )
+    ) {
+        return -1;
+    }
+
+    int result = 0;
+    int CommonYearList[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    int LeapYearList[] = {0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    // In the same year
+    if (endDate.year == startDate.year) {
+        cout << "In the same year." << endl;
+        // In the same month
+        if (endDate.month == startDate.month) {
+            result = endDate.day - startDate.day;
+        } else {
+            // Common year or leap year
+            if (endDate.isLeap()) {
+                result += LeapYearList[startDate.month] - startDate.day;
+                for (int scanner = startDate.month + 1; scanner < endDate.month; scanner++) {
+                    result += LeapYearList[scanner];
+                }
+                result += endDate.day;
+            } else {
+                result += CommonYearList[startDate.month] - startDate.day;
+                for (int scanner = startDate.month + 1; scanner < endDate.month; scanner++) {
+                    result += CommonYearList[scanner];
+                }
+                result += endDate.day;
+            }
+        }
+    } else {
+        // Start in leap year
+        if (startDate.isLeap()) {
+            result += LeapYearList[startDate.month] - startDate.day;
+            for (int scanner = startDate.month + 1; scanner <= 12; scanner++) {
+                result += LeapYearList[scanner];
+            }
+        } else {
+            result += CommonYearList[startDate.month] - startDate.day;
+            for (int scanner = startDate.month + 1; scanner <= 12; scanner++) {
+                result += CommonYearList[scanner];
+            }
+        }
+        // End in leap year
+        if (endDate.isLeap()) {
+            for (int scanner = 1; scanner < endDate.month; scanner++) {
+                result += LeapYearList[scanner];
+            }
+            result += startDate.day;
+        } else {
+            for (int scanner = 1; scanner < endDate.month; scanner++) {
+                result += CommonYearList[scanner];
+            }
+            result += startDate.day;
+        }
+        // Years between start and end
+        for (int scanner = startDate.year + 1; scanner < endDate.year; scanner++) {
+            result += isLeap(scanner) ? 366 : 365;
+        }
+    }
+
+    return result;
+}
+
+/************************************************/
+/*                   Functions                  */
+/************************************************/
+bool isLeap(int year) {
+    return year % 400 == 0 || (year % 4 == 0 && year % 100 != 0);
 }
