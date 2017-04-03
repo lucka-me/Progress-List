@@ -55,6 +55,7 @@ public:
     int getLength(void);
     double getProgress(void);
     string getDisplayString(void);
+    string getFileString(void);
 };
 
 typedef struct node {
@@ -70,8 +71,8 @@ public:
     ~consoleClass(void){};
     string getFilenName(void);
     EventNode *getList(void);
-    int displayAllEvet(EventNode *EventList);
-    int save(void);
+    int displayAllEvet(EventNode *EventListHead);
+    int save(EventNode *EventListHead);
 };
 
 bool isLeap(int year);
@@ -238,6 +239,22 @@ string Event::getDisplayString(void) {
     return result;
 }
 
+string Event::getFileString(void) {
+    string result = "#[" + name + "][" + description + "][";
+
+    // Add startDate and endDate, using resultStream and resultTemp
+    result += to_string(startDate.year) + ' ';
+    result += to_string(startDate.month, 2) + ' ';
+    result += to_string(startDate.day, 2);
+    result += "][";
+    result += to_string(endDate.year) + ' ';
+    result += to_string(endDate.month, 2) + ' ';
+    result += to_string(endDate.day, 2);
+    result += "]";
+
+    return result;
+}
+
 /************************************************/
 /*                 consoleClass                 */
 /************************************************/
@@ -277,7 +294,7 @@ EventNode *consoleClass::getList(void) {
 
     // One line is like:
     // #[Term][This term][2017 2 27][2017 7 7]
-    string  name, description, temp;
+    string  name, description;
     int     startDateYear, startDateMonth, startDateDay;
     int     endDateYear, endDateMonth, endDateDay;
     ifstream file;
@@ -308,20 +325,28 @@ EventNode *consoleClass::getList(void) {
     return EventListHead;
 }
 
-int consoleClass::displayAllEvet(EventNode *EventList) {
+int consoleClass::displayAllEvet(EventNode *EventListHead) {
     int flag = 0;
     int counter = 0;
-    EventNode *scanner = EventList;
+    EventNode *scanner = EventListHead;
     while (scanner->next != NULL) {
         scanner = scanner->next;
         counter++;
-        cout << setfill('0') << setw(2) << counter << ". " << scanner->data.getDisplayString() << endl;
+        cout << setfill('0') << setw(2) << counter << ". " << scanner->data.getDisplayString() << "\n\n";
 	}
     return flag;
 }
 
-int consoleClass::save(void) {
+int consoleClass::save(EventNode *EventListHead) {
     int flag = 0;
+    EventNode *scanner = EventListHead;
+
+    ofstream file;
+    file.open(filename, ios::out);
+    while (scanner->next != NULL) {
+        scanner = scanner->next;
+        file << scanner->data.getFileString() << endl;
+	}
     return flag;
 }
 /************************************************/
