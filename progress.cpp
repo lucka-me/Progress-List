@@ -1,6 +1,12 @@
-#include <string>
 #include <iostream>
+#include <iomanip>
+#include <string>
+#include <sstream>
+#include <time.h>
+
 using namespace std;
+
+#define WINDOW_WIDTH 80
 
 /************************************************/
 /*                     Head                     */
@@ -19,33 +25,35 @@ public:
     ~Date(void) {};
     bool isLeap(void);
     friend int operator - (Date &endDate, Date &startDate);
+    friend class Event;
 };
 
 class Event {
 private:
-    int number;
     string name;
     string description;
     Date startDate;
     Date endDate;
     int length;
+    int past;
     double progress;
 public:
     Event(
-        string init_name,
-        Date init_startDate,
-        Date init_endDate,
-        string init_description = "",
-        int init_num = 0,
-        int init_length = 0,
-        double init_progress = 0.0
+        string  init_name,
+        Date    init_startDate,
+        Date    init_endDate,
+        string  init_description    = "",
+        int     init_length         = 0,
+        int     init_past         = 0,
+        double  init_progress       = 0.0
     );
     ~Event(void) {};
-    int edit(int cmd, Event &target, string str);
-    int edit(int cmd, Event &target, Date d);
+    int initiate(void);
+    int update(int cmd, Event &target, string newInfo);
+    int update(int cmd, Event &target, Date newDate);
     int getLength(void);
     double getProgress(void);
-    string getLine(void);
+    string getDisplayString(void);
 };
 
 typedef struct node {
@@ -55,24 +63,23 @@ typedef struct node {
 } NewNode;
 
 bool isLeap(int year);
-
+Date getToday(void);
+string to_string(int number, int width);
+string to_string(double number, int precision);
 
 /************************************************/
 /*                     main                     */
 /************************************************/
 
 int main(int argc, char const *argv[]) {
-    Date start;
-    Date end;
-    int tempYear, tempMonth, tempDay;
-    cout << "Enter the began: ";
-    cin >> tempYear >> tempMonth >> tempDay;
-    start = Date(tempYear, tempMonth, tempDay);
-    cout << "isLeap:" << start.isLeap() << endl;
-    cout << "Enter the end: ";
-    cin >> tempYear >> tempMonth >> tempDay;
-    end = Date(tempYear, tempMonth, tempDay);
-    cout << end - start << "days" << endl;
+    Event test(
+        "Term",
+        Date(2017, 2, 27),
+        Date(2017, 7, 7),
+        "A test event, this term.",
+        1
+    );
+    cout << test.getDisplayString() << endl;
     return 0;
 }
 
@@ -92,36 +99,51 @@ bool Date::isLeap(void) {
 /*                     Event                    */
 /************************************************/
 Event::Event(
-    string init_name,
-    Date init_startDate,
-    Date init_endDate,
-    string init_description,
-    int init_num,
-    int init_length,
-    double init_progress
+    string  init_name,
+    Date    init_startDate,
+    Date    init_endDate,
+    string  init_description,
+    int     init_length,
+    int     init_past,
+    double  init_progress
 ) {
-    number = init_num;
-    name = init_name;
+    name        = init_name;
     description = init_description;
-    startDate = init_startDate;
-    endDate = init_endDate;
-    length = init_length;
-    progress = init_progress;
+    startDate   = init_startDate;
+    endDate     = init_endDate;
+    length      = init_length;
+    past      = init_past,
+    progress    = init_progress;
+    this->initiate();
 }
 
-// flags:
+int Event::initiate(void) {
+    int flag = 0;
+    Date today = getToday();
+    length = endDate - startDate;
+    past = today - startDate;
+    progress = double(past) / length;
+    return flag;
+}
+
+// Commands:
+// 1    Update the name
+// 2    Update the description
+// 3    Update the startDate
+// 4    Update the endDate
+// Flags:
 // 0    Normal
 // 1    Invalid command, not 1, 2, 3 or 4 either.
 // 11   Entered a string but command 3 or 4.
 // 21   Entered a Date but command 1 or 2.
-int Event::edit(int cmd, Event &target, string str) {
+int Event::update(int cmd, Event &target, string newInfo) {
     int flag = 0;
     switch (cmd) {
         case 1:
-            name = str;
+            name = newInfo;
             break;
         case 2:
-            description = str;
+            description = newInfo;
             break;
         case 3:
         case 4:
@@ -133,10 +155,13 @@ int Event::edit(int cmd, Event &target, string str) {
             flag = 1;
             break;
     }
+    if (!flag) {
+        this->initiate();
+    }
     return flag;
 }
 
-int Event::edit(int cmd, Event &target, Date d) {
+int Event::update(int cmd, Event &target, Date newDate) {
     int flag = 0;
     switch (cmd) {
         case 1:
@@ -145,17 +170,64 @@ int Event::edit(int cmd, Event &target, Date d) {
             flag = 21;
             break;
         case 3:
-            startDate = d;
+            startDate = newDate;
             break;
         case 4:
-            endDate = d;
+            endDate = newDate;
             break;
         default:
             cout << "Invalid command!" << endl;
             flag = 1;
             break;
     }
+    if (!flag) {
+        this->initiate();
+    }
     return flag;
+}
+
+int Event::getLength(void) {
+    return length;
+}
+
+double Event::getProgress(void) {
+    return progress;
+}
+
+string Event::getDisplayString(void) {
+    string result = name;
+
+    // Add description
+    if (description != "") {
+        result += '[' + description + ']';
+    }
+    result += '\n';
+
+    // Add startDate and endDate, using resultStream and resultTemp
+    result += to_string(startDate.year) + '-';
+    result += to_string(startDate.month, 2) + '-';
+    result += to_string(startDate.day, 2);
+    result += " -> ";
+    result += to_string(endDate.year) + '-';
+    result += to_string(endDate.month, 2) + '-';
+    result += to_string(endDate.day, 2);
+    result += '\n';
+
+    // Progress
+    result += to_string(past) + '/' + to_string(length) + "days, ";
+    result += to_string(progress * 100, 2) + "% passed.";
+    result += '\n';
+
+    int pastBlockNum = WINDOW_WIDTH * progress;
+    // Round off
+    pastBlockNum += ((progress * 100.0) - int(pastBlockNum / WINDOW_WIDTH * 100)) >= 0.5 ? 1 : 0;
+    for (int i = 0; i < pastBlockNum; i++) {
+        result += "▓";
+    }
+    for (int i = pastBlockNum; i < WINDOW_WIDTH; i++) {
+        result += "░";
+    }
+    return result;
 }
 
 /************************************************/
@@ -182,7 +254,6 @@ int operator - (Date &endDate, Date &startDate) {
     int LeapYearList[] = {0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
     // In the same year
     if (endDate.year == startDate.year) {
-        cout << "In the same year." << endl;
         // In the same month
         if (endDate.month == startDate.month) {
             result = endDate.day - startDate.day;
@@ -241,4 +312,33 @@ int operator - (Date &endDate, Date &startDate) {
 /************************************************/
 bool isLeap(int year) {
     return year % 400 == 0 || (year % 4 == 0 && year % 100 != 0);
+}
+
+Date getToday(void) {
+    time_t timep;
+    struct tm *pTIME;
+    time(&timep);
+    pTIME = localtime(&timep);
+    int year = 1900 + pTIME->tm_year;
+    int month = 1 + pTIME->tm_mon;
+    int day = pTIME->tm_mday;
+    return Date(year, month, day);
+}
+
+string to_string(int number, int width) {
+    stringstream tempStringStream;
+    string result;
+
+    tempStringStream << setfill('0') << setw(width) << number;
+    tempStringStream >> result;
+    return result;
+}
+
+string to_string(double number, int precision) {
+    stringstream tempStringStream;
+    string result;
+    // The "fixed" convert the float point number to fixed point number
+    tempStringStream << fixed << setprecision(precision) << number;
+    tempStringStream >> result;
+    return result;
 }
