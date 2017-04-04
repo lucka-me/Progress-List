@@ -31,7 +31,7 @@ public:
 
 class Event {
 private:
-    string name;
+    string title;
     string description;
     Date startDate;
     Date endDate;
@@ -40,7 +40,7 @@ private:
     double progress;
 public:
     Event(
-        string  init_name           = "",
+        string  init_title           = "",
         Date    init_startDate      = Date(),
         Date    init_endDate        = Date(),
         string  init_description    = "",
@@ -58,6 +58,10 @@ public:
     string getFileString(void);
 };
 
+// Note:
+// This linked list is NOT in OOP style,
+// because the Data Struct lesson I'm learning is based on C but not C++.
+// I'd change it into a class one day.
 typedef struct node {
     Event data;
     struct node *next;
@@ -69,13 +73,19 @@ private:
 public:
     consoleClass(void);
     ~consoleClass(void){};
+    int commandList[2];
+    int getCommand(bool isMenuDisplay = true);
     string getFilenName(void);
     EventNode *getList(void);
     int displayAllEvet(EventNode *EventListHead);
+    Event getNewEvent(void);
+    int addEvent(EventNode *EventListHead, Event newEvent, int position = 0);
+    Event deleteEvent(EventNode *EventListHead, int position = 0);
     int save(EventNode *EventListHead);
 };
 
 bool isLeap(int year);
+bool isLegalDate(int year, int month, int day);
 Date getToday(void);
 string to_string(int number, int width);
 string to_string(double number, int precision);
@@ -86,8 +96,11 @@ string to_string(double number, int precision);
 
 int main(int argc, char const *argv[]) {
     consoleClass console;
+    int command;
     string filename = console.getFilenName();
     EventNode *EventList = console.getList();
+    command = console.getCommand();
+    
     console.displayAllEvet(EventList);
     return 0;
 }
@@ -108,7 +121,7 @@ bool Date::isLeap(void) {
 /*                     Event                    */
 /************************************************/
 Event::Event(
-    string  init_name,
+    string  init_title,
     Date    init_startDate,
     Date    init_endDate,
     string  init_description,
@@ -116,7 +129,7 @@ Event::Event(
     int     init_past,
     double  init_progress
 ) {
-    name        = init_name;
+    title        = init_title;
     description = init_description;
     startDate   = init_startDate;
     endDate     = init_endDate;
@@ -136,7 +149,7 @@ int Event::initiate(void) {
 }
 
 // Commands:
-// 1    Update the name
+// 1    Update the title
 // 2    Update the description
 // 3    Update the startDate
 // 4    Update the endDate
@@ -149,7 +162,7 @@ int Event::update(int cmd, Event &target, string newInfo) {
     int flag = 0;
     switch (cmd) {
         case 1:
-            name = newInfo;
+            title = newInfo;
             break;
         case 2:
             description = newInfo;
@@ -204,7 +217,7 @@ double Event::getProgress(void) {
 }
 
 string Event::getDisplayString(void) {
-    string result = name;
+    string result = title;
 
     // Add description
     if (description != "") {
@@ -240,7 +253,7 @@ string Event::getDisplayString(void) {
 }
 
 string Event::getFileString(void) {
-    string result = "#[" + name + "][" + description + "][";
+    string result = "#[" + title + "][" + description + "][";
 
     // Add startDate and endDate, using resultStream and resultTemp
     result += to_string(startDate.year) + ' ';
@@ -260,6 +273,41 @@ string Event::getFileString(void) {
 /************************************************/
 consoleClass::consoleClass(void) {
     filename = "";
+}
+
+int consoleClass::getCommand(bool isMenuDisplay) {
+    if (isMenuDisplay) {
+        cout << "/******************************************************************************/" << endl
+             << "/*                                    MENU                                    */" << endl
+             << "/******************************************************************************/" << endl
+             << "/* 1. Display all events                                                      */" << endl
+             << "/* 2. Add a new event                                                         */" << endl
+             << "/* 3. Delete an event                                                         */" << endl
+             << "/* 4. Edit an event                                                           */" << endl
+             << "/* 5. Save to file                                                            */" << endl
+             << "/* 6. Exit                                                                    */" << endl
+             << "/******************************************************************************/" << endl;
+    }
+    cout << "Enter the command: ";
+    cin >> commandList[0];
+    switch (commandList[0]) {
+        case 1:
+        case 5:
+        case 6:
+            break;
+        case 2:
+        case 3:
+        case 4:
+            cout << "Enter the position (0 for the last): ";
+            cin >> commandList[1];
+            break;
+        default:
+            cout << "Invalid command!";
+            commandList[0] = -1;
+            break;
+    }
+
+    return commandList[0];
 }
 
 string consoleClass::getFilenName(void) {
@@ -287,6 +335,7 @@ string consoleClass::getFilenName(void) {
 }
 
 EventNode *consoleClass::getList(void) {
+    // LINKEDLIST USED
     EventNode *EventListHead = new EventNode;
     EventNode *lastNode, *newNode;
     EventListHead->next = NULL;
@@ -294,14 +343,14 @@ EventNode *consoleClass::getList(void) {
 
     // One line is like:
     // #[Term][This term][2017 2 27][2017 7 7]
-    string  name, description;
+    string  title, description;
     int     startDateYear, startDateMonth, startDateDay;
     int     endDateYear, endDateMonth, endDateDay;
     ifstream file;
     file.open(filename, ios::in);
     while (!file.eof()) {
         file.ignore(2, '[');
-        getline(file, name, ']');
+        getline(file, title, ']');
         file.ignore(1, '[');
         getline(file, description, ']');
         file.ignore(1, '[');
@@ -313,7 +362,7 @@ EventNode *consoleClass::getList(void) {
         newNode = new EventNode;
         lastNode->next = newNode;
         newNode->data = Event(
-            name,
+            title,
             Date(startDateYear, startDateMonth, startDateDay),
             Date(endDateYear, endDateMonth, endDateDay),
             description
@@ -328,6 +377,7 @@ EventNode *consoleClass::getList(void) {
 int consoleClass::displayAllEvet(EventNode *EventListHead) {
     int flag = 0;
     int counter = 0;
+    // LINKEDLIST USED
     EventNode *scanner = EventListHead;
     while (scanner->next != NULL) {
         scanner = scanner->next;
@@ -335,6 +385,95 @@ int consoleClass::displayAllEvet(EventNode *EventListHead) {
         cout << setfill('0') << setw(2) << counter << ". " << scanner->data.getDisplayString() << "\n\n";
 	}
     return flag;
+}
+
+Event consoleClass::getNewEvent(void) {
+    string  title = "", description = "";
+    int     startDateYear, startDateMonth, startDateDay;
+    int     endDateYear, endDateMonth, endDateDay;
+
+    cout << "Enter the tiitle: ";
+    getline(cin, title, '\n');
+    if (title == "") {
+        cout << "A title is recommend. If you\'re sure what you want, please enter nothing again." << endl;
+        cout << "Enter the tiitle: ";
+        getline(cin, title, '\n');
+        if (title == "") title = "EventName";
+    }
+
+    cout << "Enter the description (optional):" << endl;
+    getline(cin, title, '\n');
+
+    cout << "Enter the begining date (format: yyyy mm dd): ";
+    cin >> startDateYear >> startDateMonth >> startDateDay;
+    while (!isLegalDate(startDateYear, startDateMonth, startDateDay)) {
+        cout << "Invalid input!" << endl;
+        cout << "Enter the begining date (format: yyyy mm dd): ";
+        cin >> startDateYear >> startDateMonth >> startDateDay;
+    }
+    cout << "Enter the ending date (format: yyyy mm dd): ";
+    cin >> endDateYear >> endDateMonth >> endDateDay;
+    while (!isLegalDate(endDateYear, endDateMonth, endDateDay)) {
+        cout << "Invalid input!" << endl;
+        cout << "Enter the ending date (format: yyyy mm dd): ";
+        cin >> endDateYear >> endDateMonth >> endDateDay;
+    }
+    return Event(
+        title,
+        Date(startDateYear, startDateMonth, startDateDay),
+        Date(endDateYear, endDateMonth, endDateDay),
+        description
+    );
+}
+
+int consoleClass::addEvent(EventNode *EventListHead, Event newEvent, int position) {
+    int flag = 0;
+    // LINKEDLIST USED
+    EventNode *scanner = EventListHead;
+    EventNode *newEventNode = new EventNode;
+
+    // position == 0 -> add to the last
+    if (position == 0) {
+        while (scanner->next != NULL) {
+            scanner = scanner->next;
+        }
+    } else {
+        int counter = 0;
+        while (counter < position - 1 && scanner->next != NULL) {
+            counter++;
+            scanner = scanner->next;
+        }
+    }
+    newEventNode->data = newEvent;
+    newEventNode->next = scanner->next;
+    scanner->next = newEventNode;
+    return flag;
+}
+
+Event consoleClass::deleteEvent(EventNode *EventListHead, int position) {
+    Event result;
+    // LINKEDLIST USED
+    EventNode *scanner = EventListHead;
+    EventNode *lastNode = EventListHead;
+
+    // position == 0 -> add to the last
+    if (position == 0) {
+        while (scanner->next != NULL) {
+            lastNode = scanner;
+            scanner = scanner->next;
+        }
+    } else {
+        int counter = 0;
+        while (counter < position && scanner->next != NULL) {
+            counter++;
+            lastNode = scanner;
+            scanner = scanner->next;
+        }
+    }
+    result = scanner->data;
+    lastNode->next = scanner->next;
+    delete(scanner);
+    return result;
 }
 
 int consoleClass::save(EventNode *EventListHead) {
@@ -431,6 +570,24 @@ int operator - (Date &endDate, Date &startDate) {
 /************************************************/
 bool isLeap(int year) {
     return year % 400 == 0 || (year % 4 == 0 && year % 100 != 0);
+}
+
+bool isLegalDate(int year, int month, int day) {
+    int CommonYearList[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    int LeapYearList[] = {0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+
+    if (month < 1 || month > 12) {
+        return false;
+    } else if (day < 1) {
+        return false;
+    } else if (month != 2 && day > CommonYearList[month]) {
+        return false;
+    } else if (isLeap(year) && day > 29) {
+        return false;
+    } else if (day > 28) {
+        return false;
+    }
+    return true;
 }
 
 Date getToday(void) {
