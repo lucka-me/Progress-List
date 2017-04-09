@@ -4,10 +4,12 @@
 #include <string>
 #include <sstream>
 #include <time.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
 
 using namespace std;
 
-#define WINDOW_WIDTH 80
+int WINDOW_WIDTH;
 
 /************************************************/
 /*                     Head                     */
@@ -95,6 +97,11 @@ string to_string(double number, int precision);
 /************************************************/
 
 int main(int argc, char const *argv[]) {
+    // Get the terminal window size
+    struct winsize windowSize;
+    ioctl(STDOUT_FILENO, TIOCGWINSZ, &windowSize);
+    WINDOW_WIDTH = windowSize.ws_col;
+
     consoleClass console;
     int command;
     string filename = console.getFilenName();
