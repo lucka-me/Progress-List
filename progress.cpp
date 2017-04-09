@@ -5,7 +5,6 @@
 #include <sstream>
 #include <time.h>
 #include <sys/ioctl.h>
-#include <unistd.h>
 
 using namespace std;
 
@@ -99,16 +98,49 @@ string to_string(double number, int precision);
 int main(int argc, char const *argv[]) {
     // Get the terminal window size
     struct winsize windowSize;
-    ioctl(STDOUT_FILENO, TIOCGWINSZ, &windowSize);
+    ioctl(0, TIOCGWINSZ, &windowSize);
     WINDOW_WIDTH = windowSize.ws_col;
 
     consoleClass console;
     int command;
+    bool exitFlag = false;
+    bool isMenuDisplay = true;
     string filename = console.getFilenName();
     EventNode *EventList = console.getList();
-    command = console.getCommand();
+    Event tempEvent;
 
-    console.displayAllEvet(EventList);
+    do {
+        command = console.getCommand(isMenuDisplay);
+        isMenuDisplay = true;
+        switch (command) {
+            case -1:
+                isMenuDisplay = false;
+                break;
+            case 1:
+                console.displayAllEvet(EventList);
+                break;
+            case 2:
+                tempEvent = console.getNewEvent();
+                console.addEvent(EventList, tempEvent, console.commandList[1]);
+                break;
+            case 3:
+                console.deleteEvent(EventList, console.commandList[1]);
+                isMenuDisplay = false;
+                break;
+            case 4:
+                break;
+            case 5:
+                console.save(EventList);
+                isMenuDisplay = false;
+                break;
+            case 6:
+                exitFlag = true;
+                break;
+            default:
+                break;
+        }
+    } while(!exitFlag);
+
     return 0;
 }
 
@@ -398,18 +430,19 @@ Event consoleClass::getNewEvent(void) {
     string  title = "", description = "";
     int     startDateYear, startDateMonth, startDateDay;
     int     endDateYear, endDateMonth, endDateDay;
-
-    cout << "Enter the tiitle: ";
+    // Clean the istream
+    while (cin.get() != '\n');
+    cout << "Enter the title: ";
     getline(cin, title, '\n');
     if (title == "") {
         cout << "A title is recommend. If you\'re sure what you want, please enter nothing again." << endl;
-        cout << "Enter the tiitle: ";
+        cout << "Enter the title: ";
         getline(cin, title, '\n');
         if (title == "") title = "EventName";
     }
 
     cout << "Enter the description (optional):" << endl;
-    getline(cin, title, '\n');
+    getline(cin, description, '\n');
 
     cout << "Enter the begining date (format: yyyy mm dd): ";
     cin >> startDateYear >> startDateMonth >> startDateDay;
@@ -454,6 +487,7 @@ int consoleClass::addEvent(EventNode *EventListHead, Event newEvent, int positio
     newEventNode->data = newEvent;
     newEventNode->next = scanner->next;
     scanner->next = newEventNode;
+    cout << "Event added." << endl;
     return flag;
 }
 
@@ -493,6 +527,7 @@ int consoleClass::save(EventNode *EventListHead) {
         scanner = scanner->next;
         file << scanner->data.getFileString() << endl;
 	}
+    cout << "Saved." << endl;
     return flag;
 }
 /************************************************/
@@ -589,9 +624,9 @@ bool isLegalDate(int year, int month, int day) {
         return false;
     } else if (month != 2 && day > CommonYearList[month]) {
         return false;
-    } else if (isLeap(year) && day > 29) {
+    } else if (isLeap(year) && month == 2 && day > 29) {
         return false;
-    } else if (day > 28) {
+    } else if (month == 2 && day > 28) {
         return false;
     }
     return true;
