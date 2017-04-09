@@ -260,7 +260,7 @@ string Event::getDisplayString(void) {
 
     // Add description
     if (description != "") {
-        result += '[' + description + ']';
+        result += " [" + description + ']';
     }
     result += '\n';
 
@@ -543,7 +543,7 @@ int operator - (Date &endDate, Date &startDate) {
         ) || (
             (endDate.year == startDate.year) &&
             (endDate.month == startDate.month) &&
-            (endDate.day < startDate.day)
+            (endDate.day <= startDate.day)
         )
     ) {
         return -1;
@@ -564,17 +564,17 @@ int operator - (Date &endDate, Date &startDate) {
                 for (int scanner = startDate.month + 1; scanner < endDate.month; scanner++) {
                     result += LeapYearList[scanner];
                 }
-                result += endDate.day;
             } else {
                 result += CommonYearList[startDate.month] - startDate.day;
                 for (int scanner = startDate.month + 1; scanner < endDate.month; scanner++) {
                     result += CommonYearList[scanner];
                 }
-                result += endDate.day;
             }
+            result += endDate.day;
         }
     } else {
-        // Start in leap year
+        // In the different year
+        // Start in leap year or common year
         if (startDate.isLeap()) {
             result += LeapYearList[startDate.month] - startDate.day;
             for (int scanner = startDate.month + 1; scanner <= 12; scanner++) {
@@ -586,18 +586,17 @@ int operator - (Date &endDate, Date &startDate) {
                 result += CommonYearList[scanner];
             }
         }
-        // End in leap year
+        // End in leap year or common year
         if (endDate.isLeap()) {
             for (int scanner = 1; scanner < endDate.month; scanner++) {
                 result += LeapYearList[scanner];
             }
-            result += startDate.day;
         } else {
             for (int scanner = 1; scanner < endDate.month; scanner++) {
                 result += CommonYearList[scanner];
             }
-            result += startDate.day;
         }
+        result += endDate.day;
         // Years between start and end
         for (int scanner = startDate.year + 1; scanner < endDate.year; scanner++) {
             result += isLeap(scanner) ? 366 : 365;
