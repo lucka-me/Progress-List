@@ -100,7 +100,7 @@ int main(int argc, char const *argv[]) {
     string filename = console.getFilenName();
     EventNode *EventList = console.getList();
     command = console.getCommand();
-    
+
     console.displayAllEvet(EventList);
     return 0;
 }
@@ -277,16 +277,16 @@ consoleClass::consoleClass(void) {
 
 int consoleClass::getCommand(bool isMenuDisplay) {
     if (isMenuDisplay) {
-        cout << "/******************************************************************************/" << endl
-             << "/*                                    MENU                                    */" << endl
-             << "/******************************************************************************/" << endl
-             << "/* 1. Display all events                                                      */" << endl
-             << "/* 2. Add a new event                                                         */" << endl
-             << "/* 3. Delete an event                                                         */" << endl
-             << "/* 4. Edit an event                                                           */" << endl
-             << "/* 5. Save to file                                                            */" << endl
-             << "/* 6. Exit                                                                    */" << endl
-             << "/******************************************************************************/" << endl;
+        cout << "/*" << setfill('*') << setw(WINDOW_WIDTH - 4) << '*' << "*/" << endl
+             << "/*" << setfill(' ') << setw((WINDOW_WIDTH - 8) / 2) << ' ' << "MENU" << setfill(' ') << setw((WINDOW_WIDTH - 8) / 2) << ' ' << "*/" << endl
+             << "/*" << setfill('*') << setw(WINDOW_WIDTH - 4) << '*' << "*/" << endl
+             << "/* 1. Display all events"  << setfill(' ') << setw(WINDOW_WIDTH - 26) << ' ' << "*/" << endl
+             << "/* 2. Add a new event"     << setfill(' ') << setw(WINDOW_WIDTH - 23) << ' ' << "*/" << endl
+             << "/* 3. Delete an event"     << setfill(' ') << setw(WINDOW_WIDTH - 23) << ' ' << "*/" << endl
+             << "/* 4. Edit an event"       << setfill(' ') << setw(WINDOW_WIDTH - 21) << ' ' << "*/" << endl
+             << "/* 5. Save to file"        << setfill(' ') << setw(WINDOW_WIDTH - 20) << ' ' << "*/" << endl
+             << "/* 6. Exit"                << setfill(' ') << setw(WINDOW_WIDTH - 12) << ' ' << "*/" << endl
+             << "/*" << setfill('*') << setw(WINDOW_WIDTH - 4) << '*' << "*/" << endl;
     }
     cout << "Enter the command: ";
     cin >> commandList[0];
