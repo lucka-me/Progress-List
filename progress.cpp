@@ -51,8 +51,8 @@ public:
     );
     ~Event(void) {};
     int initiate(void);
-    int update(int cmd, Event &target, string newInfo);
-    int update(int cmd, Event &target, Date newDate);
+    int update(int cmd, string newInfo);
+    int update(int cmd, Date newDate);
     int getLength(void);
     double getProgress(void);
     string getDisplayString(void);
@@ -90,6 +90,7 @@ public:
     string getFilenName(void);
     EventListClass &getEventList(void);
     int displayAllEvet(void);
+    Date getNewDate(string name = "");
     Event getNewEvent(void);
     int addEvent(Event newEvent, int position = 0);
     Event deleteEvent(int position = 0);
@@ -209,7 +210,7 @@ int Event::initiate(void) {
 // 1    Invalid command, not 1, 2, 3 or 4 either.
 // 11   Entered a string but command 3 or 4.
 // 21   Entered a Date but command 1 or 2.
-int Event::update(int cmd, Event &target, string newInfo) {
+int Event::update(int cmd, string newInfo) {
     int flag = 0;
     switch (cmd) {
         case 1:
@@ -220,11 +221,9 @@ int Event::update(int cmd, Event &target, string newInfo) {
             break;
         case 3:
         case 4:
-            cout << "Do you mean command 1 or 2?" << endl;
             flag = 11;
             break;
         default:
-            cout << "Invalid command!" << endl;
             flag = 1;
             break;
     }
@@ -234,12 +233,11 @@ int Event::update(int cmd, Event &target, string newInfo) {
     return flag;
 }
 
-int Event::update(int cmd, Event &target, Date newDate) {
+int Event::update(int cmd, Date newDate) {
     int flag = 0;
     switch (cmd) {
         case 1:
         case 2:
-            cout << "Do you mean command 3 or 4?" << endl;
             flag = 21;
             break;
         case 3:
@@ -249,7 +247,6 @@ int Event::update(int cmd, Event &target, Date newDate) {
             endDate = newDate;
             break;
         default:
-            cout << "Invalid command!" << endl;
             flag = 1;
             break;
     }
@@ -515,10 +512,22 @@ int consoleClass::displayAllEvet(void) {
     return flag;
 }
 
+Date consoleClass::getNewDate(string name) {
+    int     year, month, day;
+    cout << "Enter the " << name << " date (format: yyyy mm dd): ";
+    cin >> year >> month >> day;
+    while (!isLegalDate(year, month, day)) {
+        cout << "Invalid date!" << endl
+             << "Enter the begining date (format: yyyy mm dd): ";
+        cin >> year >> month >> day;
+    }
+    return Date(year, month, day);
+}
+
 Event consoleClass::getNewEvent(void) {
     string  title = "", description = "";
-    int     startDateYear, startDateMonth, startDateDay;
-    int     endDateYear, endDateMonth, endDateDay;
+    Date start, end;
+
     // Clean the istream
     while (cin.get() != '\n');
     cout << "Enter the title: ";
@@ -533,26 +542,10 @@ Event consoleClass::getNewEvent(void) {
     cout << "Enter the description (optional):" << endl;
     getline(cin, description, '\n');
 
-    cout << "Enter the begining date (format: yyyy mm dd): ";
-    cin >> startDateYear >> startDateMonth >> startDateDay;
-    while (!isLegalDate(startDateYear, startDateMonth, startDateDay)) {
-        cout << "Invalid input!" << endl;
-        cout << "Enter the begining date (format: yyyy mm dd): ";
-        cin >> startDateYear >> startDateMonth >> startDateDay;
-    }
-    cout << "Enter the ending date (format: yyyy mm dd): ";
-    cin >> endDateYear >> endDateMonth >> endDateDay;
-    while (!isLegalDate(endDateYear, endDateMonth, endDateDay)) {
-        cout << "Invalid input!" << endl;
-        cout << "Enter the ending date (format: yyyy mm dd): ";
-        cin >> endDateYear >> endDateMonth >> endDateDay;
-    }
-    return Event(
-        title,
-        Date(startDateYear, startDateMonth, startDateDay),
-        Date(endDateYear, endDateMonth, endDateDay),
-        description
-    );
+    start = getNewDate("begining");
+    end = getNewDate("ending");
+
+    return Event(title, start, end, description);
 }
 
 int consoleClass::addEvent(Event newEvent, int position) {
@@ -563,11 +556,79 @@ Event consoleClass::deleteEvent(int position) {
     return eventList.deleteEvent(position);
 }
 
-int editEvent(int position) {
+int consoleClass::editEvent(int position) {
     int flag = 0;
+    int command;
+    bool isGiveup = false;
 
+    // Flags:
+    // 0    Normal
+    // 1    Invalid command, not 1, 2, 3 or 4 either.
+    // 11   Entered a string but command 3 or 4.
+    // 21   Entered a Date but command 1 or 2.
+    cout << "/*" << setfill('*') << setw(WINDOW_WIDTH - 4) << '*' << "*/" << endl
+         << "/*" << setfill(' ') << setw((WINDOW_WIDTH - 14) / 2) << ' ' << "Edit Event" << setfill(' ') << setw((WINDOW_WIDTH - 14) / 2) << ' ' << "*/" << endl
+         << "/*" << setfill('*') << setw(WINDOW_WIDTH - 4) << '*' << "*/" << endl
+         << setfill('0') << setw(2) << position << ". "<< eventList.getEvent(position).getDisplayString() << endl
+         << "/*" << setfill('*') << setw(WINDOW_WIDTH - 4) << '*' << "*/" << endl
+         << "/* 1. Update the title"        << setfill(' ') << setw(WINDOW_WIDTH - 24) << ' ' << "*/" << endl
+         << "/* 2. Update the description"  << setfill(' ') << setw(WINDOW_WIDTH - 30) << ' ' << "*/" << endl
+         << "/* 3. Update the startDate"    << setfill(' ') << setw(WINDOW_WIDTH - 28) << ' ' << "*/" << endl
+         << "/* 4. Update the endDate"      << setfill(' ') << setw(WINDOW_WIDTH - 26) << ' ' << "*/" << endl
+         << "/* 5. Give up"                 << setfill(' ') << setw(WINDOW_WIDTH - 15) << ' ' << "*/" << endl
+         << "/*" << setfill('*') << setw(WINDOW_WIDTH - 4) << '*' << "*/" << endl
+         << "Enter the command: ";
+
+    while (!isGiveup) {
+        cin >> command;
+        switch (command) {
+            case 1: {
+                string title;
+                // Clean the istream
+                while (cin.get() != '\n');
+                cout << "Enter the title: ";
+                getline(cin, title, '\n');
+                if (title == "") {
+                    cout << "A title is recommend. If you\'re sure what you want, please enter nothing again." << endl;
+                    cout << "Enter the title: ";
+                    getline(cin, title, '\n');
+                    if (title == "") title = "EventName";
+                }
+                flag = eventList.getEvent(position).update(command, title);
+                break;
+            }
+            case 2: {
+                string description;
+                // Clean the istream
+                while (cin.get() != '\n');
+                cout << "Enter the description (optional):" << endl;
+                getline(cin, description, '\n');
+                flag = eventList.getEvent(position).update(command, description);
+                break;
+            }
+            case 3: {
+                flag = eventList.getEvent(position).update(command, getNewDate("new startDate"));
+                break;
+            }
+            case 4: {
+                flag = eventList.getEvent(position).update(command, getNewDate("new endDate"));
+                break;
+            }
+            case 5: {
+                isGiveup = true;
+                break;
+            }
+            default: {
+                cout << "Invalid command!";
+                break;
+            }
+        }
+        if (!flag) isGiveup = true;
+    }
     return flag;
 }
+//int update(int cmd, Event &target, string newInfo);
+//int update(int cmd, Event &target, Date newDate);
 
 int consoleClass::save(void) {
     int flag = 0;
