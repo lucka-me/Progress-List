@@ -59,30 +59,40 @@ public:
     string getFileString(void);
 };
 
-// Note:
-// This linked list is NOT in OOP style,
-// because the Data Struct lesson I'm learning is based on C but not C++.
-// I'd change it into a class one day.
-typedef struct node {
+typedef struct _EventNode {
     Event data;
-    struct node *next;
+    struct _EventNode *next;
 } EventNode;
+
+class EventListClass {
+private:
+    EventNode *listHead;
+public:
+    EventListClass(void);
+    ~EventListClass(void) {};
+    int listLength;
+    Event &getEvent(int position);
+    int addEvent(Event newEvent, int position = 0);
+    Event deleteEvent(int position = 0);
+};
 
 class consoleClass {
 private:
     string filename;
+    EventListClass eventList;
 public:
     consoleClass(void);
     ~consoleClass(void){};
     int commandList[2];
+    EventListClass &buildEventList(void);
+    void setEventList(EventListClass &newList);
     int getCommand(bool isMenuDisplay = true);
     string getFilenName(void);
-    EventNode *getList(void);
-    int displayAllEvet(EventNode *EventListHead);
+    EventListClass &getEventList(void);
+    int displayAllEvet(void);
     Event getNewEvent(void);
-    int addEvent(EventNode *EventListHead, Event newEvent, int position = 0);
-    Event deleteEvent(EventNode *EventListHead, int position = 0);
-    int save(EventNode *EventListHead);
+    int editEvent(int position = 0);
+    int save(void);
 };
 
 bool isLeap(int year);
@@ -106,7 +116,7 @@ int main(int argc, char const *argv[]) {
     bool exitFlag = false;
     bool isMenuDisplay = true;
     string filename = console.getFilenName();
-    EventNode *EventList = console.getList();
+    EventListClass eventList = console.buildEventList();
     Event tempEvent;
 
     do {
@@ -117,20 +127,20 @@ int main(int argc, char const *argv[]) {
                 isMenuDisplay = false;
                 break;
             case 1:
-                console.displayAllEvet(EventList);
+                console.displayAllEvet();
                 break;
             case 2:
                 tempEvent = console.getNewEvent();
-                console.addEvent(EventList, tempEvent, console.commandList[1]);
+                eventList.addEvent(tempEvent, console.commandList[1]);
                 break;
             case 3:
-                console.deleteEvent(EventList, console.commandList[1]);
+                eventList.deleteEvent(console.commandList[1]);
                 isMenuDisplay = false;
                 break;
             case 4:
                 break;
             case 5:
-                console.save(EventList);
+                console.save();
                 isMenuDisplay = false;
                 break;
             case 6:
@@ -308,10 +318,93 @@ string Event::getFileString(void) {
 }
 
 /************************************************/
+/*                EventListClass                */
+/************************************************/
+EventListClass::EventListClass(void) {
+    listHead = new EventNode;
+    listHead->next = NULL;
+    listLength = 0;
+}
+
+Event &EventListClass::getEvent(int position) {
+    EventNode *scanner = listHead;
+
+    // position == 0 -> the last
+    if (position == 0) {
+        while (scanner->next != NULL) {
+            scanner = scanner->next;
+        }
+    } else {
+        int counter = 0;
+        while (counter < position && scanner->next != NULL) {
+            counter++;
+            scanner = scanner->next;
+        }
+    }
+    return scanner->data;
+}
+
+int EventListClass::addEvent(Event newEvent, int position) {
+    int flag = 0;
+    EventNode *scanner = listHead;
+    EventNode *newEventNode = new EventNode;
+
+    // position == 0 -> add to the last
+    if (position == 0) {
+        while (scanner->next != NULL) {
+            scanner = scanner->next;
+        }
+    } else {
+        int counter = 0;
+        while (counter < position - 1 && scanner->next != NULL) {
+            counter++;
+            scanner = scanner->next;
+        }
+    }
+    newEventNode->data = newEvent;
+    newEventNode->next = scanner->next;
+    scanner->next = newEventNode;
+    listLength++;
+    return flag;
+}
+
+Event EventListClass::deleteEvent(int position) {
+    Event result;
+    EventNode *scanner = listHead;
+    EventNode *lastNode = listHead;
+
+    // position == 0 -> add to the last
+    if (position == 0) {
+        while (scanner->next != NULL) {
+            lastNode = scanner;
+            scanner = scanner->next;
+        }
+    } else {
+        int counter = 0;
+        while (counter < position && scanner->next != NULL) {
+            counter++;
+            lastNode = scanner;
+            scanner = scanner->next;
+        }
+    }
+    result = scanner->data;
+    lastNode->next = scanner->next;
+    delete(scanner);
+    listLength--;
+    cout << "Event deleted." << endl;
+    return result;
+}
+
+
+/************************************************/
 /*                 consoleClass                 */
 /************************************************/
 consoleClass::consoleClass(void) {
     filename = "";
+}
+
+void consoleClass::setEventList(EventListClass &newList) {
+    eventList = newList;
 }
 
 int consoleClass::getCommand(bool isMenuDisplay) {
@@ -373,7 +466,7 @@ string consoleClass::getFilenName(void) {
 	return filename;
 }
 
-EventNode *consoleClass::getList(void) {
+EventListClass &consoleClass::buildEventList(void) {
     // LINKEDLIST USED
     EventNode *EventListHead = new EventNode;
     EventNode *lastNode, *newNode;
@@ -397,32 +490,23 @@ EventNode *consoleClass::getList(void) {
         file.ignore(2, '[');
         file >> endDateYear >> endDateMonth >> endDateDay;
         file.ignore(2, '\n');
-        if(file.eof()) break;
-        newNode = new EventNode;
-        lastNode->next = newNode;
-        newNode->data = Event(
+        eventList.addEvent(Event(
             title,
             Date(startDateYear, startDateMonth, startDateDay),
             Date(endDateYear, endDateMonth, endDateDay),
             description
-        );
-        newNode->next = NULL;
-        lastNode = newNode;
+        ));
     }
 
-    return EventListHead;
+    return eventList;
 }
 
-int consoleClass::displayAllEvet(EventNode *EventListHead) {
+int consoleClass::displayAllEvet(void) {
     int flag = 0;
-    int counter = 0;
-    // LINKEDLIST USED
-    EventNode *scanner = EventListHead;
-    while (scanner->next != NULL) {
-        scanner = scanner->next;
-        counter++;
-        cout << setfill('0') << setw(2) << counter << ". " << scanner->data.getDisplayString() << "\n\n";
-	}
+
+    for (int scanner = 1; scanner < eventList.listLength; scanner++) {
+        cout << eventList.getEvent(scanner).getDisplayString() << endl;
+    }
     return flag;
 }
 
@@ -466,67 +550,14 @@ Event consoleClass::getNewEvent(void) {
     );
 }
 
-int consoleClass::addEvent(EventNode *EventListHead, Event newEvent, int position) {
+int consoleClass::save(void) {
     int flag = 0;
-    // LINKEDLIST USED
-    EventNode *scanner = EventListHead;
-    EventNode *newEventNode = new EventNode;
-
-    // position == 0 -> add to the last
-    if (position == 0) {
-        while (scanner->next != NULL) {
-            scanner = scanner->next;
-        }
-    } else {
-        int counter = 0;
-        while (counter < position - 1 && scanner->next != NULL) {
-            counter++;
-            scanner = scanner->next;
-        }
-    }
-    newEventNode->data = newEvent;
-    newEventNode->next = scanner->next;
-    scanner->next = newEventNode;
-    cout << "Event added." << endl;
-    return flag;
-}
-
-Event consoleClass::deleteEvent(EventNode *EventListHead, int position) {
-    Event result;
-    // LINKEDLIST USED
-    EventNode *scanner = EventListHead;
-    EventNode *lastNode = EventListHead;
-
-    // position == 0 -> add to the last
-    if (position == 0) {
-        while (scanner->next != NULL) {
-            lastNode = scanner;
-            scanner = scanner->next;
-        }
-    } else {
-        int counter = 0;
-        while (counter < position && scanner->next != NULL) {
-            counter++;
-            lastNode = scanner;
-            scanner = scanner->next;
-        }
-    }
-    result = scanner->data;
-    lastNode->next = scanner->next;
-    delete(scanner);
-    return result;
-}
-
-int consoleClass::save(EventNode *EventListHead) {
-    int flag = 0;
-    EventNode *scanner = EventListHead;
 
     ofstream file;
     file.open(filename, ios::out);
-    while (scanner->next != NULL) {
-        scanner = scanner->next;
-        file << scanner->data.getFileString() << endl;
-	}
+    for (int scanner = 1; scanner < eventList.listLength; scanner++) {
+        file << eventList.getEvent(scanner).getFileString() << endl;
+    }
     cout << "Saved." << endl;
     return flag;
 }
