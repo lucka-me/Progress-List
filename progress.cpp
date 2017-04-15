@@ -4,10 +4,12 @@
 #include <string>
 #include <sstream>
 #include <time.h>
+// In Windows OS, delete the following line
 #include <sys/ioctl.h>
 
 using namespace std;
 
+// In Windows OS, assign WINDOW_WIDTH a value such as 100
 int WINDOW_WIDTH;
 
 /************************************************/
@@ -110,6 +112,7 @@ string to_string(double number, int precision);
 
 int main(int argc, char const *argv[]) {
     // Get the terminal window size
+    // In Windows OS, delete the following THREE lines
     struct winsize windowSize;
     ioctl(0, TIOCGWINSZ, &windowSize);
     WINDOW_WIDTH = windowSize.ws_col;
