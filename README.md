@@ -14,6 +14,9 @@ This project is NOT finished yet. Although it could run normally, but there are 
 * Event list edit:  
     Edit every single event, add new events and delete events.
 
+# Requirement
+* The complier **must** support C++11 standard.
+
 # To Windows OS Users
 This program is using a header file `sys/ioctl.h` that seems only provided in UNIX OS. I use it to get the width of Terminal window and make the menu and progress bar be fit for the window.
 
@@ -39,7 +42,7 @@ If you want to compile and run the program in Windows OS successfully, please fo
 
 	or any width you want.
 
-3. Delete the line 113~115:
+3. Delete the `line 113` ~ `line 115`:
 
 	```c
 	struct winsize windowSize;
