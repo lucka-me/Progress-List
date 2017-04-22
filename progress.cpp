@@ -43,13 +43,10 @@ private:
     double progress;
 public:
     Event(
-        string  init_title           = "",
+        string  init_title          = "",
         Date    init_startDate      = Date(),
         Date    init_endDate        = Date(),
         string  init_description    = "",
-        int     init_length         = 0,
-        int     init_past         = 0,
-        double  init_progress       = 0.0
     );
     ~Event(void) {};
     int initiate(void);
@@ -564,11 +561,6 @@ int consoleClass::editEvent(int position) {
     int command;
     bool isGiveup = false;
 
-    // Flags:
-    // 0    Normal
-    // 1    Invalid command, not 1, 2, 3 or 4 either.
-    // 11   Entered a string but command 3 or 4.
-    // 21   Entered a Date but command 1 or 2.
     cout << "/*" << setfill('*') << setw(WINDOW_WIDTH - 4) << '*' << "*/" << endl
          << "/*" << setfill(' ') << setw((WINDOW_WIDTH - 14) / 2) << ' ' << "Edit Event" << setfill(' ') << setw((WINDOW_WIDTH - 14) / 2) << ' ' << "*/" << endl
          << "/*" << setfill('*') << setw(WINDOW_WIDTH - 4) << '*' << "*/" << endl
@@ -630,8 +622,6 @@ int consoleClass::editEvent(int position) {
     }
     return flag;
 }
-//int update(int cmd, Event &target, string newInfo);
-//int update(int cmd, Event &target, Date newDate);
 
 int consoleClass::save(void) {
     int flag = 0;
