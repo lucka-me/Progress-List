@@ -46,7 +46,7 @@ public:
         string  init_title          = "",
         Date    init_startDate      = Date(),
         Date    init_endDate        = Date(),
-        string  init_description    = "",
+        string  init_description    = ""
     );
     ~Event(void) {};
     int initiate(void);
@@ -176,18 +176,12 @@ Event::Event(
     string  init_title,
     Date    init_startDate,
     Date    init_endDate,
-    string  init_description,
-    int     init_length,
-    int     init_past,
-    double  init_progress
+    string  init_description
 ) {
-    title        = init_title;
+    title       = init_title;
     description = init_description;
     startDate   = init_startDate;
     endDate     = init_endDate;
-    length      = init_length;
-    past      = init_past,
-    progress    = init_progress;
     this->initiate();
 }
 
@@ -196,6 +190,8 @@ int Event::initiate(void) {
     Date today = getToday();
     length = endDate - startDate;
     past = today - startDate;
+    // If the event has finished
+    past = past >= length ? length : past;
     progress = double(past) / length;
     return flag;
 }
@@ -638,7 +634,16 @@ int consoleClass::save(void) {
 /*                   Operator                   */
 /************************************************/
 int operator - (Date &endDate, Date &startDate) {
-    // Invalid operate
+    if (
+        (endDate.year == startDate.year) &&
+        (endDate.month == startDate.month) &&
+        (endDate.day == startDate.day)
+    ) {
+        return 0;
+    }
+
+    // If endDate < startDate
+    bool isNegative = false;
     if (
         (endDate.year < startDate.year
         ) || (
@@ -647,10 +652,13 @@ int operator - (Date &endDate, Date &startDate) {
         ) || (
             (endDate.year == startDate.year) &&
             (endDate.month == startDate.month) &&
-            (endDate.day <= startDate.day)
+            (endDate.day < startDate.day)
         )
     ) {
-        return -1;
+        isNegative = true;
+        Date temp = endDate;
+        endDate = startDate;
+        startDate = temp;
     }
 
     int result = 0;
@@ -707,6 +715,12 @@ int operator - (Date &endDate, Date &startDate) {
         }
     }
 
+    if (isNegative) {
+        result = 0 - result;
+        Date temp = endDate;
+        endDate = startDate;
+        startDate = temp;
+    }
     return result;
 }
 
