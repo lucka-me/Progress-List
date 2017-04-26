@@ -30,6 +30,7 @@ public:
     bool isLeap(void);
     friend int operator - (Date &endDate, Date &startDate);
     friend class Event;
+    friend bool isLegalDate(Date d);
 };
 
 class Event {
@@ -99,6 +100,7 @@ public:
 
 bool isLeap(int year);
 bool isLegalDate(int year, int month, int day);
+bool isLegalDate(Date d);
 Date getToday(void);
 string to_string(int number, int width);
 string to_string(double number, int precision);
@@ -474,6 +476,7 @@ EventListClass &consoleClass::buildEventList(void) {
     string  title, description;
     int     startDateYear, startDateMonth, startDateDay;
     int     endDateYear, endDateMonth, endDateDay;
+    Date    startDate, endDate;
     ifstream file;
     file.open(filename, ios::in);
     while (!file.eof()) {
@@ -487,12 +490,51 @@ EventListClass &consoleClass::buildEventList(void) {
         file >> endDateYear >> endDateMonth >> endDateDay;
         file.ignore(2, '\n');
         if(file.eof()) break;
-        eventList.addEvent(Event(
-            title,
-            Date(startDateYear, startDateMonth, startDateDay),
-            Date(endDateYear, endDateMonth, endDateDay),
-            description
-        ));
+        // Check if the date is legal
+        startDate = Date(startDateYear, startDateMonth, startDateDay);
+        endDate = Date(startDateYear, startDateMonth, startDateDay);
+        if (!isLegalDate(startDate)) {
+            cout << "ERROR: illegal date." << endl
+                 << "ERROR Information:" << endl
+                 << " - Title: " << title << endl
+                 << " - Description: " << description << endl
+                 << " - Start data: "
+                 << startDateYear
+                 << "-" << setfill('0') << setw(2) << startDateMonth
+                 << "-" << setfill('0') << setw(2) << startDateDay
+                 << "It's an illegal data! Please check your Database file." << endl;
+        } else if (!isLegalDate(endDate)) {
+            cout << "ERROR: illegal date." << endl
+                 << "ERROR Information:" << endl
+                 << " - Title: " << title << endl
+                 << " - Description: " << description << endl
+                 << " - End data: "
+                 << endDateYear
+                 << "-" << setfill('0') << setw(2) << endDateMonth
+                 << "-" << setfill('0') << setw(2) << endDateDay
+                 << "It's an illegal data! Please check your Database file." << endl;
+        } else if (startDate - endDate <= 0) {
+            cout << "ERROR: illegal length." << endl
+                 << "ERROR Information:" << endl
+                 << " - Title: " << title << endl
+                 << " - Description: " << description << endl
+                 << " - Start data: "
+                 << startDateYear
+                 << "-" << setfill('0') << setw(2) << startDateMonth
+                 << "-" << setfill('0') << setw(2) << startDateDay << endl
+                 << " - End data: "
+                 << endDateYear
+                 << "-" << setfill('0') << setw(2) << endDateMonth
+                 << "-" << setfill('0') << setw(2) << endDateDay
+                 << "The start date is later than or same of the end date. Please check your Database file." << endl;
+        } else {
+            eventList.addEvent(Event(
+                title,
+                startDate,
+                endDate,
+                description
+            ));
+        }
     }
 
     return eventList;
@@ -522,10 +564,11 @@ Date consoleClass::getNewDate(string name) {
 
 Event consoleClass::getNewEvent(void) {
     string  title = "", description = "";
-    Date start, end;
+    Date startDate, endDate;
 
     // Clean the istream
     while (cin.get() != '\n');
+
     cout << "Enter the title: ";
     getline(cin, title, '\n');
     if (title == "") {
@@ -538,10 +581,17 @@ Event consoleClass::getNewEvent(void) {
     cout << "Enter the description (optional):" << endl;
     getline(cin, description, '\n');
 
-    start = getNewDate("begining");
-    end = getNewDate("ending");
+    startDate = getNewDate("begining");
+    endDate = getNewDate("ending");
+    while (startDate - endDate <= 0) {
+        cout << "ERROR: illegal length." << endl
+             << "ERROR Information:" << endl
+             << "The start date is later than or same of the end date. Please enter again." << endl;
+             startDate = getNewDate("begining");
+             endDate = getNewDate("ending");
+    }
 
-    return Event(title, start, end, description);
+    return Event(title, startDate, endDate, description);
 }
 
 int consoleClass::addEvent(Event newEvent, int position) {
@@ -747,6 +797,13 @@ bool isLegalDate(int year, int month, int day) {
         return false;
     }
     return true;
+}
+
+bool isLegalDate(Date d) {
+    int year = d.year;
+    int month = d.month;
+    int day = d.day;
+    return isLegalDate(year, month, day);
 }
 
 Date getToday(void) {
