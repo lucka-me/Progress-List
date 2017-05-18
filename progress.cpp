@@ -492,7 +492,7 @@ EventListClass &consoleClass::buildEventList(void) {
         if(file.eof()) break;
         // Check if the date is legal
         startDate = Date(startDateYear, startDateMonth, startDateDay);
-        endDate = Date(startDateYear, startDateMonth, startDateDay);
+        endDate = Date(endDateYear, endDateMonth, endDateDay);
         if (!isLegalDate(startDate)) {
             cout << "ERROR: illegal date." << endl
                  << "ERROR Information:" << endl
@@ -501,7 +501,7 @@ EventListClass &consoleClass::buildEventList(void) {
                  << " - Start data: "
                  << startDateYear
                  << "-" << setfill('0') << setw(2) << startDateMonth
-                 << "-" << setfill('0') << setw(2) << startDateDay
+                 << "-" << setfill('0') << setw(2) << startDateDay << endl
                  << "It's an illegal data! Please check your Database file." << endl;
         } else if (!isLegalDate(endDate)) {
             cout << "ERROR: illegal date." << endl
@@ -511,9 +511,9 @@ EventListClass &consoleClass::buildEventList(void) {
                  << " - End data: "
                  << endDateYear
                  << "-" << setfill('0') << setw(2) << endDateMonth
-                 << "-" << setfill('0') << setw(2) << endDateDay
+                 << "-" << setfill('0') << setw(2) << endDateDay << endl
                  << "It's an illegal data! Please check your Database file." << endl;
-        } else if (startDate - endDate <= 0) {
+        } else if (endDate - startDate <= 0) {
             cout << "ERROR: illegal length." << endl
                  << "ERROR Information:" << endl
                  << " - Title: " << title << endl
@@ -525,7 +525,7 @@ EventListClass &consoleClass::buildEventList(void) {
                  << " - End data: "
                  << endDateYear
                  << "-" << setfill('0') << setw(2) << endDateMonth
-                 << "-" << setfill('0') << setw(2) << endDateDay
+                 << "-" << setfill('0') << setw(2) << endDateDay << endl
                  << "The start date is later than or same of the end date. Please check your Database file." << endl;
         } else {
             eventList.addEvent(Event(
